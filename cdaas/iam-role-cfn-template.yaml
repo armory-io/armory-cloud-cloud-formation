@@ -1,0 +1,150 @@
+#
+# Armory CD-as-a-Service Lambda Deployments AWS IAM Role CloudFormation Template
+#
+# This is an AWS CloudFormation Template featuring the IAM Role required for Armory's
+# deployment products.
+#
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: This is the IAM Role required to integrate your AWS account with Armory CD-as-a-Service product.
+Resources:
+  ArmoryRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ArmoryRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                Fn::Join:
+                  - ":"
+                  - - "arn"
+                    - "aws"
+                    - "iam"
+                    - ""
+                    - Ref: AccountId
+                    - "root"
+            Action:
+              - sts:AssumeRole
+            Condition:
+              StringEquals:
+                sts:ExternalId:
+                  Ref: ExternalId
+      Path: "/"
+  #
+  ##
+  ###
+  #### ARMORY ROLE READ PERMISSIONS
+  ###
+  ##
+  #
+  ArmoryReadOnlyPolicyAtoD:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Roles:
+        - !Ref ArmoryRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              #
+              ## CloudFormation
+              #
+
+              # Grants permission to return information about a CloudFormation extension publisher.
+              # https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_DescribePublisher.html
+              - "cloudformation:DescribePublisher"
+              # Grants permission to return the stack instance that's associated with the specified stack set, AWS account, and region.
+              # https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_DescribeStackInstance.html
+              - "cloudformation:DescribeStackInstance"
+              # Grants permission to return a description of the specified resource in the specified stack.
+              # https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_DescribeStackResource.html
+              - "cloudformation:DescribeStackResource"
+              # Grants permission to return AWS resource descriptions for running and deleted stacks.
+              # https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_DescribeStackResources.html
+              - "cloudformation:DescribeStackResources"
+              # Grants permission to return the description of the specified stack set.
+              # https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_DescribeStackSet.html
+              - "cloudformation:DescribeStackSet"
+              # Grants permission to return the description for the specified stack.
+              # https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_DescribeStacks.html
+              - "cloudformation:DescribeStacks"
+              # Grants permission to return summary information about stack instances that are associated with the specified stack set.
+              # https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_ListStackSets.html
+              - "cloudformation:ListStackInstances"
+              # Grants permission to return descriptions of all resources of the specified stack.
+              # https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_ListStackResources.html
+              - "cloudformation:ListStackResources"
+              # Grants permission to return summary information about stack sets that are associated with the user.
+              # https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_ListStackSets.html
+              - "cloudformation:ListStackSets"
+              # Grants permission to return the summary information for stacks whose status matches the specified StackStatusFilter.
+              # https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_ListStacks.html
+              - "cloudformation:ListStacks"
+            Resource: "*"
+  #
+  ##
+  ###
+  #### ARMORY ROLE WRITE PERMISSIONS
+  ###
+  ##
+  #
+  ArmoryWritePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Roles:
+        - !Ref ArmoryRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              #
+              ## Lambda
+              # https://docs.aws.amazon.com/lambda/latest/dg/API_Operations.html
+
+              # Grants permission to modify the version-specific settings of an AWS Lambda function.
+              # https://docs.aws.amazon.com/lambda/latest/dg/
+              - "lambda:*"
+              # Grants permission to retrieve the configurations for a multi region access point.
+              # https://docs.aws.amazon.com/AmazonS3/latest/API/
+              - "s3:*"
+              - "s3-object-lambda:*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              # Grants permission to delete a specified stack.s
+              # https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_DeleteStack.html
+              - "cloudformation:DeleteStack"
+              # Grants permission to delete the specified managed policy and remove it from any IAM entities (users, groups, or roles) to which it is attached.
+              # https://docs.aws.amazon.com/IAM/latest/APIReference/API_DeletePolicy.html
+              - "iam:DeletePolicy"
+              # Grants permission to delete the specified role.
+              # https://docs.aws.amazon.com/IAM/latest/APIReference/API_DeleteRole.html
+              - "iam:DeleteRole"
+              # Grants permission to detach a managed policy from the specified role.
+              # https://docs.aws.amazon.com/IAM/latest/APIReference/API_DetachRolePolicy.html
+              - "iam:DetachRolePolicy"
+              # Grants permission to delete a version from the specified managed policy
+              # https://docs.aws.amazon.com/IAM/latest/APIReference/API_DeletePolicyVersion.html
+              - "iam:DeletePolicyVersion"
+              # Grants permission to retrieve information about the specified managed policy, including the policy's default version and the total number of identities to which the policy is attached.
+              # https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetPolicy.html
+              - "iam:GetPolicy"
+              # Grants permission to list information about the versions of the specified managed policy, including the version that is currently set as the policy's default version.
+              # https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListPolicyVersions.html
+              - "iam:ListPolicyVersions"
+              - "iam:DeleteRolePolicy"
+            Resource:
+              - !Sub "${AWS::StackId}"
+              - !Sub "arn:aws:iam::${AWS::AccountId}:role/ArmoryRole"
+Parameters:
+  AccountId:
+    Description: "[!Do not change!] The Armory CD-as-a-Service AWS accountId"
+    Type: String
+  ExternalId:
+    Description: "[!Do not change!] External ID for securing the role"
+    Type: String
