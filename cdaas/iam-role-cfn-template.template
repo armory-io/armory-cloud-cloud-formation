@@ -113,6 +113,9 @@ Resources:
               # https://docs.aws.amazon.com/AmazonS3/latest/API/
               - "s3:*"
               - "s3-object-lambda:*"
+              # Grants permission to pass a role to a resource being created, so that the resource can execute with that role
+              - "iam:GetRole"
+              - "iam:PassRole"
             Resource: "*"
           - Effect: Allow
             Action:
